@@ -207,11 +207,6 @@ PYTHON_BIN="$(which python)"
 if [ "$?" -ne "0" ] ; then
   usage "cannot locate python"
 fi
-
-BREW_BIN="$(which brew)"
-if [ "$?" -ne "0" ] ; then
-  usage "cannot locate brew"
-fi
 #####
 
 log_event
