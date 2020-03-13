@@ -1,0 +1,28 @@
+#!/bin/bash
+
+### import of wci ni profile
+THIS_ARGS="$@"
+NI_PROFILE=~/.bash_profile-ni
+if [ -f "${NI_PROFILE}" ] ; then
+  . "${NI_PROFILE}"
+else
+  exit 1
+fi
+#####
+
+USAGE_INFO="GIT_PROFILE_ID GIT_URL"
+
+GIT_PROFILE_ID="$1"
+if [ -z "${GIT_PROFILE_ID}" ] ; then
+  usage "GIT_PROFILE_ID: variable is empty" "${USAGE_INFO}"
+fi
+
+TARGET_REPO_URL="$2"
+if [ -z "${TARGET_REPO_URL}" ] ; then
+  usage "TARGET_REPO_URL: variable is empty" "${USAGE_INFO}"
+fi
+
+wci-git-create_branch "${GIT_PROFILE_ID}" "${TARGET_REPO_URL}" master development
+if [ "$?" != "0" ] ; then
+  usage "wci-git-create_branch command exited with errors" "${USAGE_INFO}"
+fi

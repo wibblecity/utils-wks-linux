@@ -1,0 +1,9 @@
+type: Git Workspace
+interval: 60
+path: /data/puppet
+url: git@github.com:puppetlabs/puppet.git
+ssh_key_id: p
+ops:
+  - clone
+  - fetch
+  - pull

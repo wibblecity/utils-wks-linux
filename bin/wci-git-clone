@@ -1,0 +1,98 @@
+#!/bin/bash
+
+### import of wci ni profile
+THIS_ARGS="$@"
+NI_PROFILE=~/.bash_profile-ni
+if [ -f "${NI_PROFILE}" ] ; then
+  . "${NI_PROFILE}"
+else
+  exit 1
+fi
+#####
+
+USAGE_INFO="GIT_PROFILE_ID GIT_URL BRANCH_NAME THIS_BASE_DIR"
+
+GIT_PROFILE_ID="$1"
+if [ -z "${GIT_PROFILE_ID}" ] ; then
+  usage "GIT_PROFILE_ID variable is empty" "${USAGE_INFO}"
+fi
+
+GIT_URL="$2"
+if [ -z "${GIT_URL}" ] ; then
+  usage "GIT_URL variable is empty" "${USAGE_INFO}"
+fi
+
+BRANCH_NAME="$3"
+if [ -z "${BRANCH_NAME}" ] ; then
+  usage "BRANCH_NAME variable is empty" "${USAGE_INFO}"
+fi
+
+THIS_BASE_DIR="$4"
+if [ -z "${THIS_BASE_DIR}" ] ; then
+  usage "THIS_BASE_DIR variable is empty" "${USAGE_INFO}"
+fi
+THIS_BASE_DIR="$(realpath "${THIS_BASE_DIR}")"
+if [ "$?" != "0" ] ; then
+  usage "THIS_BASE_DIR realpath command exited with errors" "${USAGE_INFO}"
+fi
+
+GIT_TARGET="$(basename "${GIT_URL}")"
+if [ "$?" != "0" ] ; then
+  usage "basename command exited with errors" "${USAGE_INFO}"
+fi
+
+REPO_NAME="$(echo "${GIT_TARGET}" | cut -f1 -d\.)"
+if [ "$?" != "0" ] ; then
+  usage "cut command exited with errors" "${USAGE_INFO}"
+fi
+
+if [ -f "${WCI_CFG_GIT_SET_VARIABLES}" ] ; then
+  . "${WCI_CFG_GIT_SET_VARIABLES}"
+else
+  usage "Cannot include Git variables file: ${WCI_CFG_GIT_SET_VARIABLES}" "${USAGE_INFO}"
+fi
+
+if [ -z "${SSH_KEY_PATH}" ] ; then
+  usage "SSH_KEY_PATH variable is empty" "${USAGE_INFO}"
+fi
+
+THIS_WORKSPACE_PATH="${THIS_BASE_DIR}/${REPO_NAME}"
+if [ -z "${THIS_WORKSPACE_PATH}" ] ; then
+  usage "THIS_WORKSPACE_PATH variable is empty" "${USAGE_INFO}"
+fi
+if [ -d "${THIS_WORKSPACE_PATH}" ] ; then
+  usage "Workspace path: ${THIS_WORKSPACE_PATH} already exists" "${USAGE_INFO}"
+fi
+
+log_event "Cloning Repository"
+log_event "  GIT_URL: ${GIT_URL}"
+log_event "  GIT_TARGET: ${GIT_TARGET}"
+log_event "  THIS_BASE_DIR: ${THIS_BASE_DIR}"
+log_event "  THIS_WORKSPACE_PATH: ${THIS_WORKSPACE_PATH}"
+log_event "  REPO_NAME: ${REPO_NAME}"
+log_event "  SSH_KEY_PATH: ${SSH_KEY_PATH}"
+
+cd "${THIS_BASE_DIR}"
+if [ "$?" != "0" ] ; then
+  usage "cd command exited with errors" "${USAGE_INFO}"
+fi
+
+GIT_SSH_COMMAND="ssh -i ${SSH_KEY_PATH}" git clone --verbose --progress --branch "${BRANCH_NAME}" "${GIT_URL}"
+if [ "$?" != "0" ] ; then
+  usage "git clone command exited with errors" "${USAGE_INFO}"
+fi
+
+if [ ! -d "${THIS_WORKSPACE_PATH}" ] ; then
+  usage "Workspace path: ${THIS_WORKSPACE_PATH} does not exist" "${USAGE_INFO}"
+fi
+
+log_line
+
+if [ ! -x "${WCI_WKS_UTILS_GIT_CONFIGURE_WORKSPACE}" ] ; then
+  usage "WCI_WKS_UTILS_GIT_CONFIGURE_WORKSPACE: ${WCI_WKS_UTILS_GIT_CONFIGURE_WORKSPACE} is not an executable file" "${USAGE_INFO}"
+fi
+
+"${WCI_WKS_UTILS_GIT_CONFIGURE_WORKSPACE}" "${GIT_PROFILE_ID}" "${THIS_WORKSPACE_PATH}"
+if [ "$?" != "0" ] ; then
+  usage "WCI_WKS_UTILS_GIT_CONFIGURE_WORKSPACE: ${WCI_WKS_UTILS_GIT_CONFIGURE_WORKSPACE} command exited with errors" "${USAGE_INFO}"
+fi

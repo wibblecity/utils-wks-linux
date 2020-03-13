@@ -1,0 +1,109 @@
+#!/bin/bash
+
+### import of wci ni profile
+THIS_ARGS="$@"
+NI_PROFILE=~/.bash_profile-ni
+if [ -f "${NI_PROFILE}" ] ; then
+  . "${NI_PROFILE}"
+else
+  exit 1
+fi
+#####
+
+USAGE_INFO="GIT_PROFILE_ID GIT_URL SRC_BRANCH_NAME NEW_BRANCH_NAME"
+
+GIT_PROFILE_ID="$1"
+if [ -z "${GIT_PROFILE_ID}" ] ; then
+  usage "GIT_PROFILE_ID: variable is empty" "${USAGE_INFO}"
+fi
+
+TARGET_REPO_URL="$2"
+if [ -z "${TARGET_REPO_URL}" ] ; then
+  usage "TARGET_REPO_URL: variable is empty" "${USAGE_INFO}"
+fi
+
+SRC_BRANCH_NAME="$3"
+if [ -z "${SRC_BRANCH_NAME}" ] ; then
+  usage "SRC_BRANCH_NAME: variable is empty" "${USAGE_INFO}"
+fi
+
+NEW_BRANCH_NAME="$4"
+if [ -z "${NEW_BRANCH_NAME}" ] ; then
+  usage "NEW_BRANCH_NAME: variable is empty" "${USAGE_INFO}"
+fi
+
+WORKSPACE_PATH="/tmp/git/`date "+%s"`-${RANDOM}"
+log_event "WORKSPACE_PATH: ${WORKSPACE_PATH}"
+
+GIT_TARGET=`basename "${TARGET_REPO_URL}"`
+if [ -z "${GIT_TARGET}" ] ; then
+  usage "GIT_TARGET: variable is empty" "${USAGE_INFO}"
+fi
+REPO_NAME=`echo "${GIT_TARGET}" | cut -f1 -d\.`
+if [ "$?" -ne "0" ] ; then
+  usage "cut command exited with errors" "${USAGE_INFO}"
+fi
+if [ "${REPO_NAME}" == "" ] ; then
+  usage "REPO_NAME: variable is empty" "${USAGE_INFO}"
+fi
+
+BRANCH_CHECK="$(wci-git-check_branch_exists "${GIT_PROFILE_ID}" "${TARGET_REPO_URL}" "${NEW_BRANCH_NAME}")"
+if [ "$?" -ne "0" ] ; then
+  usage "wci-git-check_branch_exists command exited with errors" "${USAGE_INFO}"
+fi
+if [ "${BRANCH_CHECK}" -ne "0" ] ; then
+  usage "Branch: ${NEW_BRANCH_NAME} already exists" "${USAGE_INFO}"
+fi
+
+log_event "Creating New Branch - Repository: ${REPO_NAME} - Source Branch: ${SRC_BRANCH_NAME} - New Branch: ${NEW_BRANCH_NAME} - Started"
+
+mkdir -p "${WORKSPACE_PATH}"
+if [ "$?" -ne "0" ] ; then
+  usage "mkdir command exited with errors" "${USAGE_INFO}"
+fi
+
+chmod 700 "${WORKSPACE_PATH}"
+if [ "$?" -ne "0" ] ; then
+  usage "chmod command exited with errors"
+fi
+
+cd "${WORKSPACE_PATH}"
+if [ "$?" -ne "0" ] ; then
+  usage "cd command exited with errors"
+fi
+
+wci-git-clone "${GIT_PROFILE_ID}" "${TARGET_REPO_URL}" "${SRC_BRANCH_NAME}" "${WORKSPACE_PATH}"
+if [ "$?" -ne "0" ] ; then
+  usage "wci-git-clone command exited with errors"
+fi
+REPO_PATH="${WORKSPACE_PATH}/${REPO_NAME}"
+
+if [ -d "${REPO_PATH}" ] ; then
+  cd "${REPO_PATH}"
+  if [ "$?" -ne "0" ] ; then
+    usage "cd command exited with errors"
+  fi
+else
+  usage "Variable REPO_PATH does not refer to a directory: ${REPO_PATH}"
+fi
+
+git checkout -b "${NEW_BRANCH_NAME}"
+if [ "$?" -ne "0" ] ; then
+  usage "git command exited with errors: git checkout -b ${NEW_BRANCH_NAME}"
+fi
+
+git push --set-upstream origin "${NEW_BRANCH_NAME}"
+if [ "$?" -ne "0" ] ; then
+  usage "git command exited with errors: git push --set-upstream origin ${NEW_BRANCH_NAME}"
+fi
+
+if [ -d "${WORKSPACE_PATH}" ] ; then
+  rm -rf "${WORKSPACE_PATH}"
+  if [ "$?" -ne "0" ] ; then
+    usage "rm command exited with errors: rm -r ${WORKSPACE_PATH}"
+  fi
+else
+  usage "Path does not refer to a directory: ${WORKSPACE_PATH}"
+fi
+
+log_event "Creating New Branch - Complete"

@@ -1,0 +1,80 @@
+#!/bin/bash
+
+### import of wci ni profile
+THIS_ARGS="$@"
+NI_PROFILE=~/.bash_profile-ni
+if [ -f "${NI_PROFILE}" ] ; then
+  . "${NI_PROFILE}"
+else
+  exit 1
+fi
+#####
+
+USAGE_INFO="GIT_PROFILE_ID THIS_WORKSPACE_DIR"
+
+GIT_PROFILE_ID="$1"
+if [ -z "${GIT_PROFILE_ID}" ] ; then
+  usage "GIT_PROFILE_ID variable is empty" "${USAGE_INFO}"
+fi
+
+THIS_WORKSPACE_DIR="$2"
+if [ -z "${THIS_WORKSPACE_DIR}" ] ; then
+  usage "THIS_WORKSPACE_DIR variable is empty" "${USAGE_INFO}"
+fi
+
+if [ -f "${WCI_CFG_GIT_SET_VARIABLES}" ] ; then
+  . "${WCI_CFG_GIT_SET_VARIABLES}"
+else
+  usage "Cannot include Git variables file: ${WCI_CFG_GIT_SET_VARIABLES}" "${USAGE_INFO}"
+fi
+
+if [ -z "${SSH_KEY_PATH}" ] ; then
+  usage "SSH_KEY_PATH is empty" "${USAGE_INFO}"
+fi
+
+if [ ! -d "${THIS_WORKSPACE_DIR}" ] ; then
+  usage "THIS_WORKSPACE_DIR: ${THIS_WORKSPACE_DIR} does not exist or is not a directory" "${USAGE_INFO}"
+fi
+
+cd "${THIS_WORKSPACE_DIR}"
+if [ "$?" != "0" ] ; then
+  usage "cd command exited with errors" "${USAGE_INFO}"
+fi
+
+log_event "Configuring Git Workspace"
+log_event "  THIS_WORKSPACE_DIR: ${THIS_WORKSPACE_DIR}"
+if [ ! -z "${SSH_KEY_PATH}" ] ; then
+  log_event "  SSH_KEY_PATH: ${SSH_KEY_PATH}"
+fi
+if [ ! -z "${GIT_AUTHOR_NAME}" ] ; then
+  log_event "  GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME}"
+fi
+if [ ! -z "${GIT_AUTHOR_EMAIL}" ] ; then
+  log_event "  GIT_AUTHOR_EMAIL: ${GIT_AUTHOR_EMAIL}"
+fi
+
+log_event
+
+if [ ! -z "${SSH_KEY_PATH}" ] ; then
+  log_event "Configuring SSH_KEY_PATH"
+  git config --local core.sshCommand "ssh -i ${SSH_KEY_PATH}"
+  if [ "$?" != "0" ] ; then
+    usage "git config command exited with errors" "${USAGE_INFO}"
+  fi
+fi
+
+if [ ! -z "${GIT_AUTHOR_NAME}" ] ; then
+  log_event "Configuring GIT_AUTHOR_NAME"
+  git config --local user.name "${GIT_AUTHOR_NAME}"
+  if [ "$?" != "0" ] ; then
+    usage "git config command exited with errors" "${USAGE_INFO}"
+  fi
+fi
+
+if [ ! -z "${GIT_AUTHOR_EMAIL}" ] ; then
+  log_event "Configuring GIT_AUTHOR_EMAIL"
+  git config --local user.email "${GIT_AUTHOR_EMAIL}"
+  if [ "$?" != "0" ] ; then
+    usage "git config command exited with errors" "${USAGE_INFO}"
+  fi
+fi

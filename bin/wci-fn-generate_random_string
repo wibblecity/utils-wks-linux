@@ -1,0 +1,24 @@
+#!/bin/bash
+
+### import of wci ni profile
+THIS_ARGS="$@"
+NI_PROFILE=~/.bash_profile-ni
+if [ -f "${NI_PROFILE}" ] ; then
+  . "${NI_PROFILE}"
+else
+  exit 1
+fi
+#####
+
+TARGET_SCRIPT_DIR="${SCRIPT_DIR_PARENT_1}/executables/python"
+TARGET_SCRIPT_NAME="generate_random_string.py"
+TARGET_SCRIPT="${TARGET_SCRIPT_DIR}/${TARGET_SCRIPT_NAME}"
+
+if [ -x "${TARGET_SCRIPT}" ] ; then
+  "${TARGET_SCRIPT}" $@
+  if [ "$?" -ne "0" ] ; then
+    usage "TARGET_SCRIPT: ${TARGET_SCRIPT_NAME} exited with errors"
+  fi
+else
+  usage "TARGET_SCRIPT: ${TARGET_SCRIPT_NAME} is not executable"
+fi

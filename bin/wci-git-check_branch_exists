@@ -1,0 +1,57 @@
+#!/bin/bash
+
+### import of wci ni profile
+THIS_ARGS="$@"
+NI_PROFILE=~/.bash_profile-ni
+if [ -f "${NI_PROFILE}" ] ; then
+  . "${NI_PROFILE}"
+else
+  exit 1
+fi
+#####
+
+USAGE_INFO="GIT_PROFILE_ID GIT_URL BRANCH_NAME"
+
+GIT_PROFILE_ID="$1"
+if [ -z "${GIT_PROFILE_ID}" ] ; then
+  usage "GIT_PROFILE_ID: variable is empty" "${USAGE_INFO}"
+fi
+
+TARGET_REPO_URL="$2"
+if [ -z "${TARGET_REPO_URL}" ] ; then
+  usage "TARGET_REPO_URL: variable is empty" "${USAGE_INFO}"
+fi
+
+BRANCH_NAME="$3"
+if [ -z "${BRANCH_NAME}" ] ; then
+  usage "BRANCH_NAME: variable is empty" "${USAGE_INFO}"
+fi
+
+GIT_TARGET=`basename "${TARGET_REPO_URL}"`
+if [ "${GIT_TARGET}" == "" ] ; then
+  usage "GIT_TARGET is empty"
+fi
+REPO_NAME=`echo "${GIT_TARGET}" | cut -f1 -d\.`
+if [ "$?" -ne "0" ] ; then
+  usage "cut command exited with errors"
+fi
+if [ "${REPO_NAME}" == "" ] ; then
+  usage "REPO_NAME is empty"
+fi
+
+if [ -f "${WCI_CFG_GIT_SET_VARIABLES}" ] ; then
+  . "${WCI_CFG_GIT_SET_VARIABLES}"
+else
+  usage "Cannot include Git variables file: ${WCI_CFG_GIT_SET_VARIABLES}" "${USAGE_INFO}"
+fi
+
+if [ -z "${SSH_KEY_PATH}" ] ; then
+  usage "SSH_KEY_PATH variable is empty" "${USAGE_INFO}"
+fi
+
+GITOUTPUT=$(GIT_SSH_COMMAND="ssh -i ${SSH_KEY_PATH}" git ls-remote --heads "${TARGET_REPO_URL}" "${BRANCH_NAME}" | wc -l | sed "s/\ //g")
+if [ "$?" != "0" ] ; then
+  usage "git ls-remote command exited with errors" "${USAGE_INFO}"
+fi
+
+echo "${GITOUTPUT}"

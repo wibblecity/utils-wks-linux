@@ -1,0 +1,24 @@
+#!/bin/bash
+
+### import of wci ni profile
+THIS_ARGS="$@"
+NI_PROFILE=~/.bash_profile-ni
+if [ -f "${NI_PROFILE}" ] ; then
+  . "${NI_PROFILE}"
+else
+  exit 1
+fi
+#####
+
+WCI_AGENT_EXECUTIVE_BIN="${SCRIPT_DIR}/agent-executive"
+
+if [ ! -f "${WCI_AGENT_EXECUTIVE_BIN}" ] ; then
+  usage "WCI_AGENT_EXECUTIVE_BIN: ${WCI_AGENT_EXECUTIVE_BIN} does not exist or is not a file"
+fi
+
+log_event "WCI Agent - Started - PID: $$"
+
+chmod 700 "${WCI_AGENT_EXECUTIVE_BIN}"
+"${WCI_AGENT_EXECUTIVE_BIN}"
+
+log_event "WCI Agent - Shutting Down"

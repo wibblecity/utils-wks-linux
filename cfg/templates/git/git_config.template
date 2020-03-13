@@ -1,0 +1,14 @@
+### Rename this file to git_config.bash to configure the Git profiles'
+## Modify and uncomment these examples to add available git profiles
+
+# if [ "${GIT_PROFILE_ID}" == "personal" ] ; then
+#   GIT_AUTHOR_NAME="Joe Bloggs"
+#   GIT_AUTHOR_EMAIL="git@joebloggs.com"
+#   SSH_KEY_PATH="~/.ssh/joe.bloggs@git"
+# fi
+
+# if [ "${GIT_PROFILE_ID}" == "work-bloggerspace" ] ; then
+#   GIT_AUTHOR_NAME="John Smithh"
+#   GIT_AUTHOR_EMAIL="me@johnsmith.co.uk"
+#   SSH_KEY_PATH="~/.ssh/john.smith@work.co.uk"
+# fi

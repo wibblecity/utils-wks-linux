@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+require 'wci'
+require 'yaml'
+require 'pp'
+require 'fileutils'
+
+properties = {}
+properties['State'] = 'Starting'
+properties['Start Time'] = Time.now
+properties['PID'] = Process.pid
+
+home_dir = ENV['HOME']
+wci_cfg_base = home_dir + "/.wci"
+task_cfg_dir = wci_cfg_base + '/cfg/tasks'
+pid_dir = wci_cfg_base + '/pid'
+pid_file = pid_dir + '/agent-executive.pid'
+log_dir = wci_cfg_base + '/logs'
+log_file = log_dir + '/agent-executive.log'
+
+logger = Wci::Core::Logging::Logger.new(log_file, 30, 'daily')
+logger.datetime_format = '%Y-%m-%d %H:%M:%S'
+logger.formatter = proc do |severity, datetime, progname, msg|
+  "#{datetime} - WCI Agent - Executive - #{msg}\n"
+end
+
+if !Dir.exists? wci_cfg_base
+  raise wci_cfg_base + ' does not exist'
+end
+
+FileUtils.mkdir_p pid_dir
+File.write(pid_file, properties['PID'])
+sleep 3
+confirmed_pid = File.read(pid_file)
+
+if confirmed_pid.to_i != properties['PID'].to_i
+  logger.add(Logger::WARN) { 'PID: ' + properties['PID'].to_s + ' - This thread is not the confirmed owner of the process, shutting down - Owner PID: ' + confirmed_pid.to_s }
+  exit(0)
+end
+
+FileUtils.mkdir_p task_cfg_dir
+
+logger.add(Logger::INFO) { 'Started - PID: ' + properties['PID'].to_s }
+
+properties['State'] = 'Active'
+
+while properties['State'] == 'Active'
+  sleep 1
+  confirmed_pid = File.read(pid_file)
+  if confirmed_pid.to_i != properties['PID'].to_i
+    logger.add(Logger::WARN) { 'PID: ' + properties['PID'].to_s + ' - This thread is not the confirmed owner of the process, shutting down - Owner PID: ' + confirmed_pid.to_s }
+    exit(0)
+  end
+
+  task_file_list = Dir.glob(task_cfg_dir + "/*.yaml")
+  task_file_list.each do |task_file|
+    this_config = YAML.load_file(task_file)
+    logger.add(Logger::WARN) {this_config.to_s}
+  end
+
+  active_time = Time.now.to_f - properties['Start Time'].to_f
+  if active_time.to_f > 60.to_f
+    properties['State'] = 'Shutting Down'
+  end
+end
+
+properties['Shutdown Time'] = Time.now
+
+logger.add(Logger::INFO) { 'Shutting Down' }

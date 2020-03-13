@@ -1,0 +1,43 @@
+#!/bin/bash
+
+### understand location
+START_DIR=`pwd`
+RELATIVE_SCRIPT_DIR=`dirname $0`
+cd ${RELATIVE_SCRIPT_DIR}
+SCRIPT_DIR=`pwd`
+SCRIPT_NAME=`basename $0`
+SCRIPT_PATH="${SCRIPT_DIR}/${SCRIPT_NAME}"
+cd ${START_DIR}
+#####
+
+### functions
+function usage {
+  ERROR_LOG_EVENT="$1"
+  echo >&2
+  log_event "ERROR: ${ERROR_LOG_EVENT}" >&2
+  echo >&2
+  echo "Usage: $0 TARGET_DIR" >&2
+  echo >&2
+  exit 1
+}
+
+function log_event {
+  EVENT_DATA="$1"
+  LOG_TIMESTAMP=`date "+%F %H:%M:%S %z"`
+  echo "${LOG_TIMESTAMP} - ${EVENT_DATA}" >&2
+}
+
+function log_line {
+  EVENT_DATA="$1"
+  echo "${EVENT_DATA}" >&2
+}
+#####
+
+### variables
+APP_PATH_BASE=~/Apps
+BIN_PATH_BASE=~/Bin
+
+THIS_APP_REAL_PATH=`dirname ${SCRIPT_DIR}`
+THIS_APP_NAME=`basename ${THIS_APP_REAL_PATH}`
+APP_PATH="${APP_PATH_BASE}/${THIS_APP_NAME}"
+#####
