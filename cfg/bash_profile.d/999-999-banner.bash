@@ -87,10 +87,6 @@ if [ "${WCI_ENABLE_BANNER}" == "TRUE" ] ; then
     done
     echo
 
-    echo "${TITLE_INDENT} OS Information:"
-    sw_vers
-    echo
-
     echo "${TITLE_INDENT} Filesystem Information:"
     df -Hl
     echo
