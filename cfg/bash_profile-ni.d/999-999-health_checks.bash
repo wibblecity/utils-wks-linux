@@ -5,8 +5,8 @@ if [ "$?" -ne "0" ] ; then
   usage "Cannot locate ruby binary"
 fi
 
-PYTHON_BIN="$(which python)"
+PYTHON_BIN="$(which python3)"
 if [ "$?" -ne "0" ] ; then
-  usage "Cannot locate python binary"
+  usage "Cannot locate python3 binary"
 fi
 #####
